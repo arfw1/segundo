@@ -1,0 +1,71 @@
+
+const int LONG_BUFFER = 5;
+semaphore datoDisponible=0;
+semaphore hueco=LONG_BUFFER;
+binarysem mutex=1;
+int Buffer[LONG_BUFFER];
+int cont;
+void Imprimir(){
+	int i;
+	for(i = 0;i<LONG_BUFFER;i++){
+		cout<<Buffer[i];
+		create(100+i,25,Buffer[i],200+(i*20),120,20,20);
+	}
+	cout<<"\n";
+}
+void dejaDato(){
+	Buffer[cont]=1;
+	Imprimir();
+}
+
+void tomaDato(){
+	Buffer[cont]=0;
+	Imprimir();
+}
+
+void Consume(){
+	if(cont!=0){
+		cont--;
+	}
+}
+
+void Produce(){
+	if(cont<LONG_BUFFER-1){
+		cont++;
+	}
+}
+void Productor(){
+	while(1){
+		Produce();
+		wait(hueco);
+		wait(mutex);
+		dejaDato();
+		signal(mutex);
+		signal(datoDisponible);
+	}
+}
+void Consumidor(){
+	while(1){
+		wait(datoDisponible);
+		wait(mutex);
+		tomaDato();
+		signal(mutex);
+		signal(hueco);
+		Consume();
+	}
+}
+void empezar(){
+	int i;
+	for(i=0;i<LONG_BUFFER;i++){
+		Buffer[i]=0;
+		create(100+i,25,Buffer[i],200+(i*20),120,20,20);
+	}
+	cont=(-1);
+}
+void main(){
+	empezar();
+	cobegin{
+		Productor();
+		Consumidor();
+	}
+}

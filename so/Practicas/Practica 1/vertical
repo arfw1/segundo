@@ -1,0 +1,13 @@
+int main(){
+	int e,i;
+	for(i=0;i<s;i++){
+		if(fork()==0){
+			printf("\nSoy el hijo de %d y mi PIDD es %d",anterior,getppid());
+			anterior=getppid();
+			sleep (2);
+		}else{
+			wait(&e);
+			exit(0);		
+		}
+	}
+}

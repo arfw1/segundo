@@ -1,0 +1,12 @@
+#lang racket
+(require "lpp.rkt")
+(define (pascal-memo fila col dic)
+  (cond
+    ((= col 0) 1)
+    ((= fila col) 1)
+    ((not(equal? (get (cons fila col) dic) #f))
+         (get (cons fila col) dic))
+    (else (put (cons fila col)
+               (+ (pascal-memo (- fila 1) (- col 1) dic)
+                  (pascal-memo (- fila 1) col dic))
+               dic))))

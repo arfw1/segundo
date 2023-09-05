@@ -1,0 +1,7 @@
+#lang racket
+(require "lpp.rkt")
+
+(define (concat lista)
+  (concat-iter "" lista))
+(define (concat-iter res lista)
+  (concat-iter (string-append res (first lista)) (rest lista)))

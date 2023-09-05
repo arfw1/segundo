@@ -1,0 +1,423 @@
+34017_TEO1.2.3.4.40_POR01.02.03.04.05.06.07.08.09.40
+Entrega práctica 5
+
+CUESTIONARIO
+Entrega práctica 5
+Comenzado el	sábado, 4 de marzo de 2023, 20:55
+Estado	Finalizado
+Finalizado en	sábado, 4 de marzo de 2023, 20:56
+Tiempo empleado	26 segundos
+Pregunta 1
+Finalizado
+Puntúa como 1,00
+Marcar pregunta
+Enunciado de la pregunta
+Copia a continuación la solución del ejercicio 1 de la práctica
+
+Texto de la respuesta
+()
+Retroalimentación
+#lang racket
+(require rackunit)
+(require "lpp.rkt")
+
+
+;--------------;
+; Ejercicio 1: ;
+;--------------;
+
+;----;
+; a) ;
+;----;
+
+
+(define (aplica-veces f1 f2 n x)
+  (if (= n 0)
+      x
+      (f1 (f2 (aplica-veces f1 f2 (- n 1) x)))))
+
+(check-equal? (aplica-veces (lambda (x) (+ x 1)) (lambda (x) (+ x 2)) 2 10) 16)
+(check-equal? (aplica-veces (lambda (x) (* x x)) (lambda (x) (+ x 1)) 4 3) 7072978201)
+
+
+;----;
+; b) ;
+;----;
+
+; En esta versión del ejercicio, la lista original puede no contener
+; ningún dato que cumpla la condición. Fíjate que si sucede ese caso el valor
+; devuelto por la primera llamada recursiva será la lista original, por lo que
+; se llamará a la función "inserta-segundo-cond" con el primer elemento de la
+; lista y el resto de la lista tal cual, sin modificar.
+
+; En ese caso NO habrá que insertar el dato en segunda posición,
+; sino añadirlo en cabeza para devolver la lista original.
+
+; Solo hay que insertar el dato en segunda posición cuando el primer elemento
+; de la lista cumple la condición.
+
+(define (inserta-segundo-cond dato pred lista)
+  (if (pred (first lista))
+      (cons (first lista)
+            (cons dato (rest lista)))
+      (cons dato lista)))
+
+(define (mueve-al-principio-cond pred lista)
+  (cond
+    ((null? (rest lista)) lista)
+    ((pred (first lista)) lista)
+    (else (inserta-segundo-cond (first lista)
+                                pred
+                                (mueve-al-principio-cond pred (rest lista))))))
+
+(check-equal? (mueve-al-principio-cond number? '(a b c 1 d 1 e 1)) '(1 a b c d 1 e 1))
+(check-equal? (mueve-al-principio-cond number? '(1 a b 1 c)) '(1 a b 1 c))
+(check-equal? (mueve-al-principio-cond number? '(a b c d)) '(a b c d))
+
+;----;
+; c) ;
+;----;
+
+
+(define (comprueba pred lista lista-num)
+  (cond
+    ((or (null? lista) (null? lista-num)) '())
+    ((pred (first lista) (first lista-num))
+           (cons (cons (first lista)
+                       (first lista-num))
+                 (comprueba pred (rest lista) (rest lista-num))))
+    (else (comprueba pred (rest lista) (rest lista-num)))))
+
+(check-equal? (comprueba (lambda (x y)
+                          (= (string-length (symbol->string x)) y))
+              '(este es un ejercicio de examen) '(2 1 2 9 1 6))
+              '((un . 2) (ejercicio . 9) (examen . 6)))
+
+(check-equal? (comprueba (lambda (x y)
+                         (= (string-length x) (string-length y)))
+             '("aui" "a" "ae" "c" "aeiou")
+             '("hola" "b" "es" "que" "cinco"))
+              '(("a" . "b") ("ae" . "es") ("aeiou" . "cinco")))
+
+
+;--------------;
+; Ejercicio 2: ;
+;--------------;
+
+;;
+;; Funciones auxiliares de la práctica anterior
+;;
+
+(define (obten-palo caracter)
+  (cond
+    ((equal? #\♠ caracter) 'Picas)
+    ((equal? #\♣ caracter) 'Tréboles)
+    ((equal? #\♥ caracter) 'Corazones)
+    (else 'Diamantes)))
+
+(define (obten-valor caracter)
+  (cond
+    ((equal? #\A caracter) 1)  ; As
+    ((equal? #\J caracter) 10) ; Sota
+    ((equal? #\Q caracter) 11) ; Caballo
+    ((equal? #\K caracter) 12) ; Rey
+    (else (- (char->integer caracter) (char->integer #\0)))))
+
+(define (carta simbolo)
+  (cons (obten-valor (string-ref (symbol->string simbolo) 0))
+        (obten-palo (string-ref (symbol->string simbolo) 1))))
+
+(define (valor-carta c)
+  (car (carta c)))
+
+;----;
+; a) ;
+;----;
+
+(define (inserta-ordenada-generica dato lista-ordenada menor-igual?)
+  (cond
+    ((null? lista-ordenada) (list dato))
+    ((menor-igual? dato (first lista-ordenada)) (cons dato lista-ordenada))
+    (else (cons (first lista-ordenada)
+                (inserta-ordenada-generica dato (rest lista-ordenada) menor-igual?)))))
+
+(check-equal?
+ (inserta-ordenada-generica "c" '("a" "b" "d" "e") string<=?) '("a" "b" "c" "d" "e"))
+
+(define (ordena-generica lista menor-igual?)
+  (if (null? lista)
+      '()
+      (inserta-ordenada-generica (first lista) (ordena-generica (rest lista) menor-igual?) menor-igual?)))
+
+;----;
+; b) ;
+;----;
+
+
+(check-equal? (ordena-generica '("Hola" "me" "llamo" "Iñigo" "Montoya") (lambda (str1 str2) (<= (string-length str1) (string-length str2))))
+              '("me" "Hola" "llamo" "Iñigo" "Montoya"))
+(check-equal? (ordena-generica '("Hola" "me" "llamo" "Iñigo" "Montoya") string<=?) '("Hola" "Iñigo" "Montoya" "llamo" "me"))
+
+(check-equal?
+ (ordena-generica '((2 . 2) (1 . 1) (3 . 0) (5 . 1)) (lambda (x y) (<= (+ (car x) (cdr x))
+                                                                                  (+ (car y) (cdr y))))) '((1 . 1) (3 . 0) (2 . 2) (5 . 1)))
+
+;----;
+; c) ;
+;----;
+
+(define (ordena-cartas lista-cartas)
+  (ordena-generica lista-cartas (lambda (x y) (<= (valor-carta x) (valor-carta y)))))
+
+(check-equal? (ordena-cartas '(Q♠ J♣ 5♣ Q♥ J♦)) '(5♣ J♣ J♦ Q♠ Q♥))
+
+
+;--------------;
+; Ejercicio 3: ;
+;--------------;
+
+;----;
+; a) ;
+;----;
+
+(check-equal? (map (lambda (x)
+                     (cond 
+                       ((symbol? x) (symbol->string x))
+                       ((number? x) (number->string x))
+                       ((boolean? x) (if x "#t" "#f"))
+                       (else "desconocido")))
+                   '(1 #t hola #f (1 . 2)))
+              '("1" "#t" "hola" "#f" "desconocido"))
+
+(check-equal? (filter (lambda (x) 
+                        (equal? (string-ref (symbol->string x) 1) #\a))
+                      '(alicante barcelona madrid almería))
+              '(barcelona madrid))
+
+(check-equal? (foldr (lambda (dato resultado)
+                       (string-append dato "*" resultado)) "" 
+                 '("Hola" "que" "tal")) "Hola*que*tal*")
+
+(check-equal? (foldr append '() '((1 2) (3 4 5) (6 7) (8))) '(1 2 3 4 5 6 7 8))
+
+(check-equal? (foldl (lambda (dato resultado)
+                       (string-append
+                        (symbol->string (car dato))
+                        (symbol->string (cdr dato))
+                        resultado)) "" '((a . b) (hola . adios) (una . pareja)))
+              "unaparejaholaadiosab")
+
+(check-equal? (foldr (lambda (dato resultado)
+                       (cons (+ (car resultado) dato)
+                             (+ (cdr resultado) 1))) '(0 . 0) '(1 1 2 2 3 3))
+              '(12 . 6))
+
+(check-equal? (apply + (map cdr '((1 . 3) (2 . 8) (2 . 4)))) 15)
+
+(check-equal? (apply min (map car (filter (lambda (p)
+                                            (> (car p) (cdr p))) 
+                                          '((3 . 1) (1 . 20) (5 . 2))))) 3)
+
+;----;
+; b) ;
+;----;
+
+(define lista '((2 . 7) (3 . 5) (10 . 4) (5 . 5)))
+
+(check-equal? (filter even?
+                      (map (lambda (x) (+ (car x)
+                                          (cdr x)))
+                           lista))
+              '(8 14 10))
+
+(check-equal? (filter (lambda (x) (> (car x) (cdr x)))
+                      (map (lambda (x) (cons (cdr x) (car x))) lista))
+              '((7 . 2) (5 . 3)))
+
+(check-equal? (foldr (lambda (d r) (cons (car d) r)) '()
+                     (filter (lambda (x) (even? (+ (car x) (cdr x)))) lista))
+              '(3 10 5))
+
+;----;
+; c) ;
+;----;
+
+(define (f1 x) (lambda (y z) (string-append y z x)))
+(define g1 (f1 "a"))
+(check-equal? (g1 "clase" "lpp") "claselppa")
+
+(define (f2 x) (lambda (y z) (list y x z)))
+(define g2 (f2 "lpp"))
+(check-equal? (g2 "hola""clase") (list "hola" "lpp" "clase"))
+
+(define (f3 g3) (lambda(z x) (g3 z x)))
+(check-equal? ((f3 cons) 3 4) '(3 . 4))
+
+;--------------;
+; Ejercicio 4: ;
+;--------------;
+
+;----;
+; a) ;
+;----;
+
+(define (contar-datos-iguales-fos lista-parejas)
+  (length (filter (lambda (pareja)
+            (equal? (car pareja)
+                    (cdr pareja))) lista-parejas)))
+
+(check-equal? (contar-datos-iguales-fos '((2 . 3) ("hola" . "hola") (\#a . \#a) (true . false))) 2)
+(check-equal? (contar-datos-iguales-fos '((2 . "hola") ("hola" . 3) (\#a . true) (\#b . false))) 0)
+
+
+;----;
+; b) ;
+;----;
+
+(define (expande-pareja pareja)
+  (if (= (cdr pareja) 0)
+      '()
+      (cons (car pareja)
+            (expande-pareja (cons (car pareja)
+                                  (- (cdr pareja) 1))))))
+
+(define (expande-lista-fos lista-parejas)
+  (foldr append '() (map expande-pareja lista-parejas)))
+
+; También se puede usar 'apply' en lugar de 'foldr':
+;
+;(define (expande-lista lista-parejas)
+;  (apply append (map expande-pareja lista-parejas)))
+
+(check-equal? (expande-lista-fos '((#t . 3) ("LPP" . 2) (b . 4)))
+              '(#t #t #t "LPP" "LPP" b b b b))
+
+
+;----;
+; c) ;
+;----;
+
+(define (comprueba-simbolos-fos lista-simbolos lista-num)
+  (filter (lambda (pareja)
+            (= (string-length (symbol->string (car pareja))) (cdr pareja)))
+          (map cons lista-simbolos lista-num)))
+
+(check-equal? (comprueba-simbolos-fos '(este es un ejercicio de examen) '(2 1 2 9 1 6))
+              '((un . 2) (ejercicio . 9) (examen . 6)))
+
+
+;--------------;
+; Ejercicio 5: ;
+;--------------;
+
+;----;
+; a) ;
+;----;
+
+(define (suma-n-izq n lista-parejas)
+  (map (lambda (pareja)
+         (cons (+ (car pareja) n)
+               (cdr pareja)))
+       lista-parejas))
+
+(check-equal? (suma-n-izq 10 '((1 . 3) (0 . 9) (5 . 8) (4 . 1)))
+              '((11 . 3) (10 . 9) (15 . 8) (14 . 1)))
+
+;----;
+; b) ;
+;----;
+
+(define (aplica-2 func lista-parejas)
+  (map (lambda (pareja)
+         (func (car pareja) (cdr pareja)))
+       lista-parejas))
+
+(check-equal? (aplica-2 + '((2 . 3) (1 . -1) (5 . 4))) '(5 0 9))
+(check-equal? (aplica-2 (lambda (x y)
+                          (if (even? x)
+                              y
+                              (* y -1))) '((2 . 3) (1 . 3) (5 . 4) (8 . 10)))
+              '(3 -3 -4 10))
+
+(require "lpp.rkt")
+
+
+;--------------;
+; Ejercicio 6: ;
+;--------------;
+
+
+;----;
+; a) ;
+;----;
+
+(define (busca-mayor mayor? lista)
+  (foldl (lambda (dato resultado)
+           (if (mayor? dato resultado)
+               dato
+               resultado))
+         (first lista) (rest lista)))
+
+(check-equal? (busca-mayor > '(8 3 4 1 9 6 2)) 9)
+(check-equal? (busca-mayor char>? '(#\e #\u #\i)) #\u)
+(check-equal? (busca-mayor string>? '("hola" "adios")) "hola")
+(check-equal? (busca-mayor (lambda (x y)
+                             (> (string-length x)
+                                (string-length y)))
+                           '("hola" "adios")) "adios")
+
+;----;
+; b) ;
+;----;
+
+
+(define (todos-menores-v1? lista n)
+  (for-all? (lambda (sublista)
+              (> n (busca-mayor > sublista))) lista))
+
+
+(define (todos-menores-v2? lista n)
+  (for-all? (lambda (sublista)
+              (not (exists? (lambda (x)
+                              (>= x n)) sublista))) lista))
+
+
+(check-true (todos-menores-v1? '((10 30 20) (1 50 30) (30 40 90)) 100))
+(check-false (todos-menores-v1? '((10 30 20) (1 50 30) (30 40 90)) 90))
+(check-false (todos-menores-v1? '((10 30 20) (1 50 30) (30 40 90)) 55))
+
+(check-true (todos-menores-v2? '((10 30 20) (1 50 30) (30 40 90)) 100))
+(check-false (todos-menores-v2? '((10 30 20) (1 50 30) (30 40 90)) 90))
+(check-false (todos-menores-v2? '((10 30 20) (1 50 30) (30 40 90)) 55))
+
+;----;
+; c) ;
+;----;
+
+(define (incrementa contaje)
+  (cons (cons (+ 1 (car (first contaje)))
+              (cdr (first contaje)))
+        (rest contaje)))
+
+(check-equal? (incrementa '((2 . 3) (1 . 5) (2 . 10))) '((3 . 3) (1 . 5) (2 . 10)))
+
+; Como las cartas están ordenadas, el valor de la carta
+; que me llega siempre va a ser menor o igual que el primer valor del
+; contaje-ordenado (o contaje-ordenado va a ser una lista vacía).
+
+(define (añade-valor carta contaje-ordenado)
+  (if (or (null? contaje-ordenado)
+          (< (valor-carta carta)
+             (cdr (first contaje-ordenado))))
+      (cons (cons 1 (valor-carta carta))
+            contaje-ordenado)
+      (incrementa contaje-ordenado)))
+
+(check-equal? (añade-valor '3♣ '()) '((1 . 3)))
+(check-equal? (añade-valor '3♣ '((1 . 10) (2 . 12))) '((1 . 3) (1 . 10) (2 . 12)))
+(check-equal? (añade-valor 'A♣ '((1 . 1) (1 . 10) (2 . 12))) '((2 . 1) (1 . 10) (2 . 12)))
+
+(define (cuenta-repetidas-fos cartas)
+  (foldr añade-valor '() (ordena-cartas cartas)))
+
+(check-equal? (cuenta-repetidas-fos '(J♦ Q♠ 2♦ 5♣ J♣ 2♣ Q♥)) '((2 . 2) (1 . 5) (2 . 10) (2 . 11)))

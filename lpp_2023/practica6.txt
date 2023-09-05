@@ -1,0 +1,246 @@
+#lang racket
+(require rackunit)
+(require "lpp.rkt")
+(require 2htdp/image)
+
+;;;;;;;;;;;;;;;
+; Ejercicio 1 ;
+;;;;;;;;;;;;;;;
+
+;;;;;;
+; a) ;
+;;;;;;
+
+(define (concat-iter lista-cadenas res)
+  (if (null? lista-cadenas)
+      res
+      (concat-iter (rest lista-cadenas) (string-append res (first lista-cadenas)))))
+
+(define (concat lista-cadenas)
+  (concat-iter lista-cadenas ""))
+
+(check-equal? (concat-iter '("hola" "y" "adiós") "") "holayadiós")
+(check-equal? (concat  '("hola" "y" "adiós")) "holayadiós")
+
+;;;;;;
+; b) ;
+;;;;;;
+
+(define (min-max-pareja dato pareja)
+  (cons (min dato (car pareja))
+        (max dato (cdr pareja))))
+
+(define (min-max-iter lista res)
+  (if (null? lista)
+      res
+      (min-max-iter (rest lista)
+                    (min-max-pareja (first lista) res))))
+
+(define (min-max lista)
+  (min-max-iter (rest lista) (cons (first lista) (first lista))))
+
+(check-equal? (min-max-pareja 3 '(10 . 20)) '(3 . 20))
+(check-equal? (min-max-pareja 30 '(10 . 20)) '(10 . 30))
+(check-equal? (min-max-pareja 15 '(10 . 20)) '(10 . 20))
+(check-equal? (min-max-iter '(5 9 12 -2 5 0 4) '(2 . 2)) '(-2 . 12))
+(check-equal? (min-max '(2 5 9 12 -2 5 0 4)) '(-2 . 12))
+(check-equal? (min-max '(2 5 9 12 5 0 4)) '(0 . 12))
+(check-equal? (min-max '(3 2 -8 4 10 0)) '(-8 . 10))
+;;;;;;;;;;;;;;;
+; Ejercicio 2 ;
+;;;;;;;;;;;;;;;
+
+;;;;;;
+; a) ;
+;;;;;;
+
+(define (expande-pareja-iter pareja res)
+  (if (= 0 (cdr pareja))
+      res
+      (expande-pareja-iter (cons (car pareja)
+                                 (- (cdr pareja) 1))
+                           (cons (car pareja) res))))
+
+(define (expande-pareja pareja)
+  (expande-pareja-iter pareja '()))
+
+(define (expande-parejas-iter lista-parejas res)
+  (if (null? lista-parejas)
+      res
+      (expande-parejas-iter (rest lista-parejas)
+                            (append res (expande-pareja (first lista-parejas))))))
+
+(define (expande-parejas . lista-parejas)
+  (expande-parejas-iter lista-parejas '()))
+
+(check-equal? (expande-pareja '(a . 4)) '(a a a a))
+(check-equal? (expande-parejas '(#t . 3) '("LPP" . 2) '(b . 4)) '(#t #t #t "LPP" "LPP" b b b b))
+
+;;;;;;
+; b) ;
+;;;;;;
+
+(define (rotar n lista)
+  (if (= n 0)
+      lista
+      (rotar (- n 1) (append (rest lista) (list (first lista))))))
+
+(check-equal? (rotar 4 '(a b c d e f g)) '(e f g a b c d))
+;;;;;;;;;;;;;;;
+; Ejercicio 3 ;
+;;;;;;;;;;;;;;;
+
+;;;;;;
+; a) ;
+;;;;;;
+
+(define (mi-foldl funcion resultado lista)
+  (if (null? lista)
+      resultado
+      (mi-foldl funcion (funcion (first lista) resultado) (rest lista))))
+
+(check-equal? (mi-foldl string-append "****" '("hola" "que" "tal")) "talquehola****")
+(check-equal? (mi-foldl cons '() '(1 2 3 4)) '(4 3 2 1))
+
+;;;;;;
+; b) ;
+;;;;;;
+
+(define (binario-a-decimal-iter lista-bits res)
+  (if (null? lista-bits)
+      res
+      (binario-a-decimal-iter (rest lista-bits) (+ (* 2 res) (first lista-bits)))))
+
+(define (binario-a-decimal lista-bits)
+  (binario-a-decimal-iter lista-bits 0))
+
+(check-equal? (binario-a-decimal-iter '(1 1) 3) 15)
+(check-equal? (binario-a-decimal-iter '(1 0) 1) 6)
+(check-equal? (binario-a-decimal-iter '(1 0) 0) 2)
+(check-equal? (binario-a-decimal '(1 1 1 1)) 15)
+(check-equal? (binario-a-decimal '(1 1 0)) 6)
+(check-equal? (binario-a-decimal '(1 0)) 2);
+
+;;;;;;;;;;;;;;;
+; Ejercicio 4 ;
+;;;;;;;;;;;;;;;
+
+(define (pascal-memo fil col dic)
+  (cond ((= col 0) 1)
+        ((= col fil) 1)
+        ((not (equal? (get (cons fil col) dic) #f)) (get (cons fil col) dic))
+        (else (put (cons fil col) (+ (pascal-memo (- fil 1) (- col 1) dic)
+                                     (pascal-memo (- fil 1) col dic)) dic))))
+
+(define diccionario (crea-diccionario))
+(check-equal? (pascal-memo 8 4 diccionario) 70)
+(check-equal? (pascal-memo 40 20 diccionario) 137846528820)
+;;;;;;;;;;;;;;;
+; Ejercicio 5 ;
+;;;;;;;;;;;;;;;
+
+;;;;;;
+; a) ;
+;;;;;;
+
+; Solución con varias llamadas recursivas:
+
+(define (koch nivel trazo)
+  (if (= 0 nivel)
+      (line trazo 0 "black")
+      (beside/align "bottom"
+                    (koch (- nivel 1) (/ trazo 3))
+                    (rotate 60
+                            (koch (- nivel 1) (/ trazo 3)))
+                    (rotate -60
+                            (koch (- nivel 1) (/ trazo 3)))
+                    (koch (- nivel 1) (/ trazo 3)))))
+
+
+(time (koch 5 600))
+
+; Solución mejorada en la que hay una
+; única llamada recursiva que devuelve una figura
+; y una función de combinación (combina-koch) que combina la
+; figura resultante de la llamada recursiva.
+
+(define (combina-koch figura)
+  (beside/align "bottom"
+                figura
+                (rotate 60 figura)
+                (rotate -60 figura)
+                figura))
+
+(define (koch-optimizada nivel trazo)
+  (if (= 0 nivel)
+      (line trazo 0 "black")
+      (combina-koch (koch-optimizada (- nivel 1) (/ trazo 3)))))
+
+(time (koch-optimizada 5 600))
+
+;;;;;;
+; b) ;
+;;;;;;
+
+; Solución con varias llamadas recursivas
+
+(define (copo-nieve nivel trazo)
+  (above (koch nivel trazo)
+         (beside (rotate 120
+                         (koch nivel trazo))
+                 (rotate -120
+                         (koch nivel trazo)))))
+
+
+(time (copo-nieve 5 200))
+
+
+; Solución optimizada:
+
+(define (combina-copo-nieve figura)
+  (above figura
+         (beside (rotate 120 figura)
+                 (rotate -120 figura))))
+
+(define (copo-nieve-optimiz nivel trazo)
+  (combina-copo-nieve (koch nivel trazo)))
+
+(time (copo-nieve-optimiz 5 200))
+;;;;;;;;;;;;;;;
+; Ejercicio 6 ;
+;;;;;;;;;;;;;;;
+
+; Solución con varias llamadas recursivas:
+
+(define (alfombra-sierpinski tam)
+  (if (> tam 20)
+        (above (beside
+                (alfombra-sierpinski (/ tam 3))
+                (alfombra-sierpinski (/ tam 3))
+                (alfombra-sierpinski (/ tam 3)))
+               (beside
+                (alfombra-sierpinski (/ tam 3))
+                (circle (/ tam 6) "solid" "blue")  
+                (alfombra-sierpinski (/ tam 3)))
+               (beside
+                (alfombra-sierpinski (/ tam 3))
+                (alfombra-sierpinski (/ tam 3))
+                (alfombra-sierpinski (/ tam 3))))
+        (circle (/ tam 2) "outline" "blue")))
+
+(time (alfombra-sierpinski 600))
+
+; Solución optimizada:
+
+(define (combina-alfombra figura circulo)
+  (above (beside figura figura figura)
+         (beside figura circulo figura)
+         (beside figura figura figura)))
+
+(define (alfombra-sierpinski-optimiz tam)
+  (if (<= tam 20)
+      (circle (/ tam 2) "outline" "blue")
+      (combina-alfombra (alfombra-sierpinski-optimiz (/ tam 3))
+                        (circle (/ tam 6) "solid" "blue"))))
+
+(time (alfombra-sierpinski-optimiz 600))
